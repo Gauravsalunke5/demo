@@ -1,0 +1,106 @@
+<body ng-app="application" ng-controller="appController">
+  <div class="form-group">
+    <label>Query All Certificate </label>
+
+  </div>
+  <table id="all_cert" class="table" align="center">
+
+    <tr>
+      <th>PR no.</th>
+      <th>Student Name</th>
+      <th>College Name</th>
+      <th>Seat no. </th>
+      <th>Examination</th>
+      <th>Year of Passing</th>
+      <th>subject</th>
+
+    </tr>
+
+      <tr *ngFor="let cert of all_cert">
+
+      <td>{{cert.record.prNo}}</td>
+      <td>{{cert.record.studentName}}</td>
+      <td>{{cert.record.collegeName}}</td>
+      <td>{{cert.record.seatNo}}</td>
+      <td>{{cert.record.examination}}</td>
+      <td>{{cert.record.yearOfPassing}}</td>
+      <td>{{cert.record.sub}}</td>
+
+    </tr>
+  </table>
+
+
+  <div class="form-group">
+    <label>Query a Specific Certificate</label><br>
+    <h5 style="color:red;margin-bottom:2%" id="error_query"></h5>
+
+
+    <form [formGroup]="queryForm">
+      <label for="query">Enter a Seat number:</label>
+      <input class="form-control" type="text" placeholder="Ex: 101" name="query" formControlName="seatNo">
+      <button (click)="queryCert()">Query Specific</button>
+    </form>
+
+  </div>
+  <table>
+  <tr>
+    <th>PR no.</th>
+    <th>Student Name</th>
+    <th>College Name</th>
+    <th>Seat no. </th>
+    <th>Examination</th>
+    <th>Year of Passing</th>
+    <th>subject</th>
+
+  </tr>
+  <tr>
+
+    <td>{{currentCertificate.record.prNo}}</td>
+    <td>{{currentCertificate.record.studentName}}</td>
+    <td>{{currentCertificate.record.collegeName}}</td>
+    <td>{{currentCertificate.record.seatNo}}</td>
+    <td>{{currentCertificate.record.examination}}</td>
+    <td>{{currentCertificate.record.yearOfPassing}}</td>
+    <td>{{currentCertificate.record.sub}}</td>
+
+  </tr>
+</table>
+  
+
+
+  <br><br>
+
+
+  <form [formGroup]="recordForm">
+
+  <div class="form-group">
+    <label>Add Certificate</label>
+    <h5 style="color:green;margin-bottom:2%" id="success_create"></h5>
+    <br>
+    Enter PR no.: <input class="form-control" type="text" placeholder="Ex: 101"formControlName="cert_PRno"><br><br>
+    Enter name of college: <input class="form-control" type="text" placeholder="Ex: PCCE" formControlName="cert_CName"><br><br>
+    Enter Seat no.: <input id="createName" class="form-control" type="text" placeholder="Ex: 101" formControlName="cert_Seatno"><br><br>
+    Enter Examination: <input id="createName" class="form-control" type="text" placeholder="Ex: may/june" formControlName="cert_examination"><br><br>
+    Enter Year of passing: <input class="form-control" type="text" placeholder="Ex: 2019" formControlName="cert_YOP"><br><br>
+    Enter Sub: <input class="form-control" type="text" placeholder="Ex: abc" formControlName="cert_sububject"><br><br>
+    <button (click)="recordCert()">Submit Records</button>
+  </div>
+
+</form>
+
+  <br><br>
+
+
+  <form [formGroup]="transferForm">
+  <div class="form-group">
+    <label>Transfer Certificate</label><br>
+   <!--<h5 style="color:green;margin-bottom:2%" id="success_holder">Success! Tx ID: {{change_holder}}</h5>
+    <h5 style="color:red;margin-bottom:2%" id="error_holder">Error: Please enter a valid seat no Id</h5>
+    --> 
+    Enter Seat no.: <input class="form-control" name="assetSelect" placeholder="Ex: 1" formControlName="seatNo"><br><br>
+    Enter Student Name: <input class="form-control" name="assetSelect" placeholder="Ex: Amogh" formControlName="studentName"><br><br>
+    <button (click)="transferCertificate()">Change Records</button>
+  </div>
+</form>
+
+</body>
