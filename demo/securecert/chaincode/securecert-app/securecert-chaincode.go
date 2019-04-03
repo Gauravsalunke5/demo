@@ -18,9 +18,9 @@ const (
 type SimpleChaincode struct {
 }
 
-/*
 type student struct {
 	PR_no             string `json:"PR_no"`
+	Password          string `json:"Password"`
 	First_Name        string `json:"First_Name"`
 	Middle_Name       string `json:"Middle_Name "`
 	Last_Name         string `json:"Last_Name"`
@@ -30,7 +30,7 @@ type student struct {
 	Email_Id          string `json:"Email_Id"`
 	Mobile            string `json:"Mobile"`
 }
-*/
+
 type cert struct {
 	PR_no           string `json:"PR_no"`
 	Student_Name    string `json:"Student_Name"`
@@ -61,36 +61,24 @@ func (t *SimpleChaincode) Init(APIstub shim.ChaincodeStubInterface) pb.Response 
 func (t *SimpleChaincode) Invoke(APIstub shim.ChaincodeStubInterface) pb.Response {
 	function, args := APIstub.GetFunctionAndParameters()
 	// Handle different functions
-	/*
-		if function == "addStudent" { //add a Student
-			return t.addStudent(APIstub, args)
-		} else if function == "readStudent" { //read a Student
-			return t.readStudent(APIstub, args)
-		} else if function == "addCert" { //add a Certificate
-			return t.addCert(APIstub, args)
-		} else if function == "readCert" { //read a Certificate
-			return t.readCert(APIstub, args)
-		} else if function == "transferCert" { //transfer a Certificate
-			return t.transferCert(APIstub, args)
-		} else if function == "initLedger" {
-			return t.initLedger(APIstub, args)
-		} else if function == "queryAllCert" {
-			return t.queryAllCert(APIstub, args)
-		}
-	*/
 
-	if function == "initLedger" {
-		return t.initLedger(APIstub, args)
-	} else if function == "queryAllCert" {
-		return t.queryAllCert(APIstub, args)
+	if function == "addStudent" { //add a Student
+		return t.addStudent(APIstub, args)
+	} else if function == "readStudent" { //read a Student
+		return t.readStudent(APIstub, args)
 	} else if function == "addCert" { //add a Certificate
 		return t.addCert(APIstub, args)
 	} else if function == "readCert" { //read a Certificate
 		return t.readCert(APIstub, args)
 	} else if function == "transferCert" { //transfer a Certificate
 		return t.transferCert(APIstub, args)
+	} else if function == "initLedger" {
+		return t.initLedger(APIstub, args)
+	} else if function == "queryAllCert" {
+		return t.queryAllCert(APIstub, args)
 	}
-	return shim.Error("Invalid Smart Contract function name.")
+	return shim.Error("Received unknown function invocation")
+
 }
 
 // ===============================================
@@ -107,7 +95,7 @@ func (t *SimpleChaincode) readCert(APIstub shim.ChaincodeStubInterface, args []s
 		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
 		return shim.Error(jsonResp)
 	} else if valAsbytes == nil {
-		jsonResp = "{\"Error\":\"Student does not exist: " + name + "\"}"
+		jsonResp = "{\"Error\":\"Certificate does not exist: " + name + "\"}"
 		return shim.Error(jsonResp)
 	}
 	return shim.Success(valAsbytes)
@@ -134,6 +122,12 @@ func (t *SimpleChaincode) initLedger(APIstub shim.ChaincodeStubInterface, args [
 		fmt.Println("Added", Cert[i])
 		i = i + 1
 	}
+
+	// ==== Create student object and marshal to JSON ====
+	student := &student{"123", "123", "G", "U", "S", "PCCE", "IT", "2015", "g@gmail.com", "8007067665"}
+	studentJSONasBytes, _ := json.Marshal(student)
+	// === Save student to state ===
+	APIstub.PutState("123", studentJSONasBytes)
 
 	return shim.Success(nil)
 }
@@ -228,7 +222,7 @@ func (t *SimpleChaincode) addCert(APIstub shim.ChaincodeStubInterface, args []st
 	certJSONasBytes, err := json.Marshal(cert)
 	err = APIstub.PutState(Seatno, certJSONasBytes)
 	if err != nil {
-		return shim.Error(fmt.Sprintf("Failed to record Cert catch: %s", Seatno))
+		return shim.Error(fmt.Sprintf("Failed to record Cert: %s", Seatno))
 	}
 
 	return shim.Success(nil)
@@ -261,4 +255,105 @@ func (t *SimpleChaincode) transferCert(APIstub shim.ChaincodeStubInterface, args
 	}
 
 	return shim.Success(nil)
+}
+
+// ========================================
+// add student details
+// PR_no,password,First_Name,Middle_Name,Last_Name,College_Name,Branch,Year_Of_Admission,Email_Id,Mobile
+func (t *SimpleChaincode) addStudent(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 10 {
+		return shim.Error("Incorrect number of arguments. Expecting 9")
+	}
+
+	// ==== Input sanitation ====
+	fmt.Println("- start")
+	if len(args[0]) <= 0 {
+		return shim.Error("1 argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return shim.Error("2 argument must be a non-empty string")
+	}
+	if len(args[2]) <= 0 {
+		return shim.Error("3 argument must be a non-empty string")
+	}
+	if len(args[3]) <= 0 {
+		return shim.Error("4 argument must be a non-empty string")
+	}
+	if len(args[4]) <= 0 {
+		return shim.Error("5 argument must be a non-empty string")
+	}
+	if len(args[5]) <= 0 {
+		return shim.Error("6 argument must be a non-empty string")
+	}
+	if len(args[6]) <= 0 {
+		return shim.Error("7 argument must be a non-empty string")
+	}
+	if len(args[7]) <= 0 {
+		return shim.Error("8 argument must be a non-empty string")
+	}
+	if len(args[8]) <= 0 {
+		return shim.Error("9 argument must be a non-empty string")
+	}
+	if len(args[9]) <= 0 {
+		return shim.Error("9 argument must be a non-empty string")
+	}
+
+	PRno := args[0]
+	password := args[1]
+	FName := args[2]
+	MName := args[3]
+	LName := args[4]
+	CName := args[5]
+	branch := args[6]
+	YOA := args[7]
+	EId := args[8]
+	mobile := args[9]
+
+	// ==== Check if Student already exists ====
+	studentAsBytes, err := APIstub.GetState(PRno)
+	if err != nil {
+		return shim.Error("Failed to get student: " + err.Error())
+	} else if studentAsBytes != nil {
+		return shim.Error("This student already exists: " + PRno)
+	}
+
+	// ==== Create student object and marshal to JSON ====
+	student := &student{PRno, password, FName, MName, LName, CName, branch, YOA, EId, mobile}
+	studentJSONasBytes, err := json.Marshal(student)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// === Save student to state ===
+	err = APIstub.PutState(PRno, studentJSONasBytes)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// ==== student saved and indexed. Return success ====
+	fmt.Println("- end Add Student")
+	return shim.Success(nil)
+}
+
+// ===============================================
+// readStudent - read a Student from chaincode state
+func (t *SimpleChaincode) readStudent(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
+	var name, jsonResp string
+	var err error
+
+	if len(args) <= 0 {
+		return shim.Error("Incorrect number of arguments. Expecting name of the name to query")
+	}
+
+	name = args[0]
+	valAsbytes, err := APIstub.GetState(name)
+	if err != nil {
+		jsonResp = "{\"Error\":\"Failed to get state for " + name + "\"}"
+		return shim.Error(jsonResp)
+	} else if valAsbytes == nil {
+		jsonResp = "{\"Error\":\"Student does not exist: " + name + "\"}"
+		return shim.Error(jsonResp)
+	}
+	return shim.Success(valAsbytes)
 }
