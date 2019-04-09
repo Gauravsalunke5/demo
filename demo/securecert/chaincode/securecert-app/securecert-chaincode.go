@@ -76,6 +76,8 @@ func (t *SimpleChaincode) Invoke(APIstub shim.ChaincodeStubInterface) pb.Respons
 		return t.initLedger(APIstub, args)
 	} else if function == "queryAllCert" {
 		return t.queryAllCert(APIstub, args)
+	} else if function == "login" {
+		return t.login(APIstub, args)
 	}
 	return shim.Error("Received unknown function invocation")
 
@@ -356,4 +358,33 @@ func (t *SimpleChaincode) readStudent(APIstub shim.ChaincodeStubInterface, args 
 		return shim.Error(jsonResp)
 	}
 	return shim.Success(valAsbytes)
+}
+
+// ========================================================================
+// login - username password
+func (t *SimpleChaincode) login(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
+	//   0       1
+	// "prno", "password"
+	if len(args) < 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+	prno := args[0]
+	password := args[1]
+
+	studentAsBytes, err := APIstub.GetState(prno)
+	if err != nil {
+		return shim.Error("Invalid username")
+
+	} else if studentAsBytes == nil {
+		return shim.Error("Invalid username")
+	}
+
+	studentAuthentication := student{}
+	json.Unmarshal(studentAsBytes, &studentAuthentication) //unmarshal it aka JSON.parse()
+
+	if studentAuthentication.Password == password {
+		return shim.Success(nil)
+	} else {
+		return shim.Error("Invalid password")
+	}
 }
