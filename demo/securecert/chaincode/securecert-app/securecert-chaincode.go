@@ -370,21 +370,28 @@ func (t *SimpleChaincode) login(APIstub shim.ChaincodeStubInterface, args []stri
 	}
 	prno := args[0]
 	password := args[1]
-
 	studentAsBytes, err := APIstub.GetState(prno)
 	if err != nil {
-		return shim.Error("Invalid username")
+		opJSONasBytes, _ := json.Marshal("failure")
+
+		return shim.Success(opJSONasBytes)
 
 	} else if studentAsBytes == nil {
-		return shim.Error("Invalid username")
+		opJSONasBytes, _ := json.Marshal("failure")
+
+		return shim.Success(opJSONasBytes)
 	}
 
 	studentAuthentication := student{}
 	json.Unmarshal(studentAsBytes, &studentAuthentication) //unmarshal it aka JSON.parse()
 
 	if studentAuthentication.Password == password {
-		return shim.Success(nil)
+		opJSONasBytes, _ := json.Marshal("success")
+
+		return shim.Success(opJSONasBytes)
 	} else {
-		return shim.Error("Invalid password")
+		opJSONasBytes, _ := json.Marshal("failure")
+
+		return shim.Success(opJSONasBytes)
 	}
 }
