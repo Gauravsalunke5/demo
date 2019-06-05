@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strconv"
+	//"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
@@ -39,6 +39,10 @@ type cert struct {
 	Examination     string `json:"Examination"`
 	Year_Of_Passing string `json:"Year_Of_Passing"`
 	Sub             string `json:"Sub"`
+}
+type user struct {
+	Username string `json:"Username"`
+	Password string `json:"Password"`
 }
 
 // ===========================
@@ -78,6 +82,10 @@ func (t *SimpleChaincode) Invoke(APIstub shim.ChaincodeStubInterface) pb.Respons
 		return t.queryAllCert(APIstub, args)
 	} else if function == "login" {
 		return t.login(APIstub, args)
+	} else if function == "uniCredentials" {
+		return t.uniCredentials(APIstub, args)
+	} else if function == "creatorCredentials" {
+		return t.creatorCredentials(APIstub, args)
 	}
 	return shim.Error("Received unknown function invocation")
 
@@ -109,27 +117,12 @@ Will add test data (10 cert catches)to our network
 */
 //PR_no,Student_Name,Seat_no,College_Name,Examination,Year_Of_Passing,Sub
 func (t *SimpleChaincode) initLedger(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
-	Cert := []cert{
-		cert{PR_no: "101", Student_Name: "Gaurav1", Seat_no: "1", College_Name: "PCCE", Examination: "may/june", Year_Of_Passing: "2019", Sub: "abc"},
-		cert{PR_no: "102", Student_Name: "Gaurav2", Seat_no: "2", College_Name: "PCCE", Examination: "may/june", Year_Of_Passing: "2019", Sub: "abc"},
-		cert{PR_no: "103", Student_Name: "Gaurav3", Seat_no: "3", College_Name: "PCCE", Examination: "may/june", Year_Of_Passing: "2019", Sub: "abc"},
-		cert{PR_no: "104", Student_Name: "Gaurav4", Seat_no: "4", College_Name: "PCCE", Examination: "may/june", Year_Of_Passing: "2019", Sub: "abc"},
-	}
-
-	i := 0
-	for i < len(Cert) {
-		fmt.Println("i is ", i)
-		valAsBytes, _ := json.Marshal(Cert[i])
-		APIstub.PutState(strconv.Itoa(i+1), valAsBytes)
-		fmt.Println("Added", Cert[i])
-		i = i + 1
-	}
 
 	// ==== Create student object and marshal to JSON ====
-	student := &student{"123", "123", "G", "U", "S", "PCCE", "IT", "2015", "g@gmail.com", "8007067665"}
+	student := &student{"201916721", "201916721", "Gaurav", "U", "Salunke", "PCCE", "IT", "2015", "gauravsal15@gmail.com", "8007067665"}
 	studentJSONasBytes, _ := json.Marshal(student)
 	// === Save student to state ===
-	APIstub.PutState("123", studentJSONasBytes)
+	APIstub.PutState("201916721", studentJSONasBytes)
 
 	return shim.Success(nil)
 }
@@ -215,7 +208,7 @@ func (t *SimpleChaincode) addCert(APIstub shim.ChaincodeStubInterface, args []st
 	if err != nil {
 		return shim.Error("Failed to get certificate: " + err.Error())
 	} else if certAsBytes != nil {
-		return shim.Error("This certificate already exists: " + PRno)
+		return shim.Error("This certificate already exists: " + Seatno)
 	}
 
 	// ==== Create certificate object and marshal to JSON ====
@@ -394,4 +387,78 @@ func (t *SimpleChaincode) login(APIstub shim.ChaincodeStubInterface, args []stri
 
 		return shim.Success(opJSONasBytes)
 	}
+}
+
+// add University credentials
+//Username, Password
+func (t *SimpleChaincode) uniCredentials(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+	if len(args[0]) <= 0 {
+		return shim.Error("1 argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return shim.Error("2 argument must be a non-empty string")
+	}
+
+	Username := args[0]
+	Password := args[1]
+
+	// ==== Check if credentials already exists ====
+	credentialAsBytes, err := APIstub.GetState(Username)
+	if err != nil {
+		return shim.Error("Failed to get credentials: " + err.Error())
+	} else if credentialAsBytes != nil {
+		return shim.Error("This credentials already exists: " + Username)
+	}
+
+	// ==== Create certificate object and marshal to JSON ====
+	universityLogin := &user{Username, Password}
+
+	credentialJSONasBytes, err := json.Marshal(universityLogin)
+	err = APIstub.PutState(Username, credentialJSONasBytes)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("Failed to add university credentials: %s", Username))
+	}
+
+	return shim.Success(nil)
+}
+
+// add Creator credentials
+//Username, Password
+func (t *SimpleChaincode) creatorCredentials(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+	if len(args[0]) <= 0 {
+		return shim.Error("1 argument must be a non-empty string")
+	}
+	if len(args[1]) <= 0 {
+		return shim.Error("2 argument must be a non-empty string")
+	}
+
+	Username := args[0]
+	Password := args[1]
+
+	// ==== Check if credentials already exists ====
+	credentialAsBytes, err := APIstub.GetState(Username)
+	if err != nil {
+		return shim.Error("Failed to get credentials: " + err.Error())
+	} else if credentialAsBytes != nil {
+		return shim.Error("This credentials already exists: " + Username)
+	}
+
+	// ==== Create certificate object and marshal to JSON ====
+	creatorLogin := &user{Username, Password}
+
+	credentialJSONasBytes, err := json.Marshal(creatorLogin)
+	err = APIstub.PutState(Username, credentialJSONasBytes)
+	if err != nil {
+		return shim.Error(fmt.Sprintf("Failed to add creator credentials: %s", Username))
+	}
+
+	return shim.Success(nil)
 }
