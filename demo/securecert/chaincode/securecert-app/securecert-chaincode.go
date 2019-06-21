@@ -20,6 +20,7 @@ type SimpleChaincode struct {
 }
 
 type student struct {
+	ObjectType        string `json:"docType"` //docType is used to distinguish the various types of objects in state database
 	PR_no             string `json:"PR_no"`
 	Password          string `json:"Password"`
 	First_Name        string `json:"First_Name"`
@@ -34,6 +35,7 @@ type student struct {
 }
 
 type cert struct {
+	ObjectType      string `json:"docType"` //docType is used to distinguish the various types of objects in state database
 	PR_no           string `json:"PR_no"`
 	Student_Name    string `json:"Student_Name"`
 	College_Name    string `json:"College_Name"`
@@ -43,9 +45,10 @@ type cert struct {
 	Sub             string `json:"Sub"`
 }
 type user struct {
-	Username string `json:"Username"`
-	Password string `json:"Password"`
-	Role     string `json:"Role"`
+	ObjectType string `json:"docType"` //docType is used to distinguish the various types of objects in state database
+	Username   string `json:"Username"`
+	Password   string `json:"Password"`
+	Role       string `json:"Role"`
 }
 
 // ===========================
@@ -91,6 +94,8 @@ func (t *SimpleChaincode) Invoke(APIstub shim.ChaincodeStubInterface) pb.Respons
 		return t.creatorCredentials(APIstub, args)
 	} else if function == "getHistoryForCert" { //get history of certificate
 		return t.getHistoryForCert(APIstub, args)
+	} else if function == "queryData" {
+		return t.queryData(APIstub, args)
 	}
 	return shim.Error("Received unknown function invocation")
 
@@ -116,15 +121,11 @@ func (t *SimpleChaincode) readCert(APIstub shim.ChaincodeStubInterface, args []s
 	return shim.Success(valAsbytes)
 }
 
-/*
- * The initLedger method *
-Will add test data (10 cert catches)to our network
-*/
-//PR_no,Student_Name,Seat_no,College_Name,Examination,Year_Of_Passing,Sub
+//The initLedger method
 func (t *SimpleChaincode) initLedger(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
 
 	// ==== Create student object and marshal to JSON ====
-	student := &student{"201916721", "201916721", "Gaurav", "U", "Salunke", "PCCE", "IT", "2015", "gauravsal15@gmail.com", "8007067665", "2"}
+	student := &student{"student", "201916721", "201916721", "Gaurav", "U", "Salunke", "PCCE", "IT", "2015", "gauravsal15@gmail.com", "8007067665", "2"}
 	studentJSONasBytes, _ := json.Marshal(student)
 	// === Save student to state ===
 	APIstub.PutState("201916721", studentJSONasBytes)
@@ -217,7 +218,7 @@ func (t *SimpleChaincode) addCert(APIstub shim.ChaincodeStubInterface, args []st
 	}
 
 	// ==== Create certificate object and marshal to JSON ====
-	cert := &cert{PRno, BU, CName, Seatno, examination, YOP, sub}
+	cert := &cert{"cert", PRno, BU, CName, Seatno, examination, YOP, sub}
 
 	certJSONasBytes, err := json.Marshal(cert)
 	err = APIstub.PutState(Seatno, certJSONasBytes)
@@ -319,7 +320,7 @@ func (t *SimpleChaincode) addStudent(APIstub shim.ChaincodeStubInterface, args [
 	}
 
 	// ==== Create student object and marshal to JSON ====
-	student := &student{PRno, password, FName, MName, LName, CName, branch, YOA, EId, mobile, "2"}
+	student := &student{"student", PRno, password, FName, MName, LName, CName, branch, YOA, EId, mobile, "2"}
 	studentJSONasBytes, err := json.Marshal(student)
 	if err != nil {
 		return shim.Error(err.Error())
@@ -453,7 +454,7 @@ func (t *SimpleChaincode) uniCredentials(APIstub shim.ChaincodeStubInterface, ar
 	}
 
 	// ==== Create certificate object and marshal to JSON ====
-	universityLogin := &user{Username, Password, Role}
+	universityLogin := &user{"user", Username, Password, Role}
 
 	credentialJSONasBytes, err := json.Marshal(universityLogin)
 	err = APIstub.PutState(Username, credentialJSONasBytes)
@@ -494,7 +495,7 @@ func (t *SimpleChaincode) creatorCredentials(APIstub shim.ChaincodeStubInterface
 	}
 
 	// ==== Create certificate object and marshal to JSON ====
-	creatorLogin := &user{Username, Password, Role}
+	creatorLogin := &user{"user", Username, Password, Role}
 
 	credentialJSONasBytes, err := json.Marshal(creatorLogin)
 	err = APIstub.PutState(Username, credentialJSONasBytes)
@@ -566,4 +567,58 @@ func (t *SimpleChaincode) getHistoryForCert(APIstub shim.ChaincodeStubInterface,
 	fmt.Printf("- getHistoryForCert returning:\n%s\n", buffer.String())
 
 	return shim.Success(buffer.Bytes())
+}
+
+// ===============================================
+// searchStudent - PR_no
+func (t *SimpleChaincode) queryData(APIstub shim.ChaincodeStubInterface, args []string) pb.Response {
+
+	if len(args) < 1 {
+		return shim.Error("Incorrect number of arguments.")
+	}
+
+	//queryString := fmt.Sprintf("{\"selector\":{\"PR_no\":\"%s\",\"First_Name\":\"%s\",\"Last_Name\":\"%s\"}}", PRno, FName, LName)
+	queryString := fmt.Sprintf(args[0])
+	queryResults, err := getQueryResultForQueryString(APIstub, queryString)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	return shim.Success(queryResults)
+}
+
+// ===============================================
+// getQueryResultForQueryString -args: queryString
+func getQueryResultForQueryString(APIstub shim.ChaincodeStubInterface, queryString string) ([]byte, error) {
+
+	fmt.Printf("- getQueryResultForQueryString queryString:\n%s\n", queryString)
+
+	resultsIterator, err := APIstub.GetQueryResult(queryString)
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	// buffer is a JSON array containing QueryRecords
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+		// Add a comma before array members, suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+		// Record is a JSON object, so we write as-is
+		buffer.WriteString(string(queryResponse.Value))
+		bArrayMemberAlreadyWritten = true
+	}
+	buffer.WriteString("]")
+
+	fmt.Printf("- getQueryResultForQueryString queryResult:\n%s\n", buffer.String())
+
+	return buffer.Bytes(), nil
 }
