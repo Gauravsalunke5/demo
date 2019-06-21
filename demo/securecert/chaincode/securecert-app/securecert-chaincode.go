@@ -242,7 +242,7 @@ func (t *SimpleChaincode) transferCert(APIstub shim.ChaincodeStubInterface, args
 
 	certAsBytes, err := APIstub.GetState(Seatno)
 	if certAsBytes == nil {
-		return shim.Error("Could not locate Cert")
+		return shim.Error("Could not locate Certificate")
 	}
 	certToTransfer := cert{}
 	json.Unmarshal(certAsBytes, &certToTransfer) //unmarshal it aka JSON.parse()
@@ -268,7 +268,6 @@ func (t *SimpleChaincode) addStudent(APIstub shim.ChaincodeStubInterface, args [
 	}
 
 	// ==== Input sanitation ====
-	fmt.Println("- start")
 	if len(args[0]) <= 0 {
 		return shim.Error("1 argument must be a non-empty string")
 	}
@@ -333,7 +332,6 @@ func (t *SimpleChaincode) addStudent(APIstub shim.ChaincodeStubInterface, args [
 	}
 
 	// ==== student saved and indexed. Return success ====
-	fmt.Println("- end Add Student")
 	return shim.Success(nil)
 }
 
